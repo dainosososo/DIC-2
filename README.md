@@ -1,10 +1,34 @@
-# AIoT-DIC2-MultipleLR: 50 Startups Regression & Feature Selection Explorer
+# 50 Startups: Multiple Linear Regression & Feature Selection Explorer
 
 本專案依據作業要求進行完整實作，包含：
 - **Part 1: CRISP-DM 標準流程** 求解 50 Startups 多元線性回歸問題
 - **Part 2: 特徵選擇 (Forward Stepwise Selection) 與機器學習多模型比較 Workflow**
 - **🎯 加總分 1 分要求**：提供**下拉式選單 (Dropdown)**，即時切換呈現兩種 Problem
 - **🎯 加總分 2 分要求**：提供**任意輸入 Dataset URL** 功能 (例如 `https://raw.githubusercontent.com/Avik-Jain/100-Days-Of-ML-Code/master/datasets/50_Startups.csv`)
+
+---
+
+## 🌐 成果查看網址 (Live Demo & Public Access)
+
+* 🌐 **您的 GitHub Pages 公開網址**：
+  👉 **[https://dainosososo.github.io/DIC-2/](https://dainosososo.github.io/DIC-2/)**
+* 🐙 **GitHub Repository**：
+  👉 **[https://github.com/dainosososo/DIC-2](https://github.com/dainosososo/DIC-2)**
+
+---
+
+## ⚙️ GitHub Pages 啟用說明
+
+已為您建立並推播了 GitHub Pages 的官方自動部署工作流（[`.github/workflows/pages.yml`](.github/workflows/pages.yml)），請按照以下步驟開啟：
+
+1. 點擊開啟倉庫的 Pages 設定頁：
+   👉 **[https://github.com/dainosososo/DIC-2/settings/pages](https://github.com/dainosososo/DIC-2/settings/pages)**
+2. 在 **Build and deployment** 區塊：
+   * **方式一（推薦）**：在 **Source** 下拉選單選擇 **GitHub Actions**。
+     系統會自動觸發剛才推送的 Actions 工作流，約 30 秒內自動完成部署上線！
+   * **方式二（傳統）**：在 **Source** 選擇 **Deploy from a branch**：
+     Branch 選擇 `main`，資料夾選擇 `/ (root)`，點擊 **Save**。
+     稍等約 1 分鐘後重新整理，即可看到綠色勾勾與發布成功的公開網址！
 
 ---
 
