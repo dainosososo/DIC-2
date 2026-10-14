@@ -1,0 +1,414 @@
+<!doctype html>
+<html lang="zh-Hant">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>50 Startups 多元線性迴歸 Explorer</title>
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+<style>
+  :root{--bg:#f4f6fb;--card:#fff;--ink:#1b2236;--muted:#5b6478;--line:#e2e6ef;--brand:#4338ca;--brand-soft:#eef0ff;--good:#0f9d6b;--warn:#b45309;--bad:#c0262d}
+  *{box-sizing:border-box}
+  body{margin:0;background:var(--bg);color:var(--ink);font:15px/1.55 -apple-system,"Segoe UI","Noto Sans TC","PingFang TC","Microsoft JhengHei",sans-serif}
+  header{background:linear-gradient(135deg,#1e1b4b,#4338ca);color:#fff;padding:28px 20px}
+  header .in,main{max-width:1100px;margin:0 auto}
+  header h1{margin:0 0 6px;font-size:1.7rem}
+  header p{margin:0;color:#c7d2fe}
+  main{padding:20px}
+  .card{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:20px;margin-bottom:18px}
+  .card h2{margin:0 0 12px;font-size:1.15rem}
+  .controls{display:grid;grid-template-columns:1fr 2fr;gap:14px}
+  @media(max-width:800px){.controls{grid-template-columns:1fr}}
+  label{display:block;font-weight:600;font-size:.88rem;margin-bottom:5px}
+  select,input[type=text]{width:100%;padding:10px 12px;border:1.5px solid #cbd2e1;border-radius:8px;font:inherit;background:#fff}
+  select:focus,input:focus{outline:none;border-color:var(--brand);box-shadow:0 0 0 3px rgba(67,56,202,.15)}
+  .row{display:flex;flex-wrap:wrap;gap:10px;align-items:center;margin-top:12px}
+  button{font:inherit;cursor:pointer;border-radius:8px;border:1px solid #cbd2e1;background:#fff;padding:8px 14px}
+  button.primary{background:var(--brand);border-color:var(--brand);color:#fff;font-weight:600;padding:10px 22px}
+  button.primary:disabled{opacity:.6;cursor:wait}
+  button.chip{padding:3px 11px;border-radius:999px;font-size:.82rem;background:#f1f3f9}
+  button:hover:not(:disabled){filter:brightness(.96)}
+  .hint{font-size:.83rem;color:var(--muted)}
+  #status{margin:0 0 14px;color:var(--muted);font-size:.9rem;min-height:1.3em}
+  #error{display:none;background:#fdecee;border:1px solid #f3b9be;color:#8f1d24;border-radius:10px;padding:12px 14px;margin-bottom:16px;white-space:pre-wrap}
+  .view{display:none}.view.on{display:block}
+  .kpis{display:grid;grid-template-columns:repeat(auto-fit,minmax(190px,1fr));gap:12px;margin-bottom:18px}
+  .kpi{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:14px 16px}
+  .kpi small{display:block;color:var(--muted);font-weight:600;text-transform:uppercase;letter-spacing:.04em;font-size:.72rem}
+  .kpi b{font-size:1.5rem}
+  table{border-collapse:collapse;width:100%;font-size:.88rem}
+  th,td{padding:8px 10px;border-bottom:1px solid var(--line);text-align:left;vertical-align:top}
+  th{background:#f7f8fc;font-weight:600}
+  td.num,th.num{text-align:right;font-variant-numeric:tabular-nums}
+  tr.best td{background:#ecfdf5;font-weight:600}
+  .scroll{overflow-x:auto;border:1px solid var(--line);border-radius:8px}
+  pre{background:#0f172a;color:#e2e8f0;padding:14px;border-radius:8px;overflow-x:auto;font-size:.8rem;margin:10px 0 0}
+  code{font-family:ui-monospace,Menlo,Consolas,monospace;font-size:.85em}
+  .eq{background:var(--brand-soft);border-left:4px solid var(--brand);padding:12px 14px;border-radius:6px;overflow-x:auto}
+  .steps{display:grid;grid-template-columns:repeat(auto-fit,minmax(250px,1fr));gap:10px;padding:0;margin:0;list-style:none}
+  .steps li{background:#f7f8fc;border:1px solid var(--line);border-radius:10px;padding:10px 12px;font-size:.88rem}
+  .steps b{display:block;margin-bottom:2px}
+  .charts{display:grid;grid-template-columns:1fr 1fr;gap:16px}
+  @media(max-width:800px){.charts{grid-template-columns:1fr}}
+  .cbox{position:relative;height:340px}
+  .note{background:#fffbeb;border:1px solid #fde68a;color:#78350f;border-radius:8px;padding:10px 12px;font-size:.85rem;margin-top:12px}
+  footer{max-width:1100px;margin:0 auto;padding:0 20px 40px;color:var(--muted);font-size:.82rem}
+</style>
+</head>
+<body>
+<header><div class="in">
+  <h1>50 Startups 多元線性迴歸 Explorer</h1>
+  <p>Problem 1:CRISP-DM 多元線性迴歸 ‧ Problem 2:Forward Selection 特徵選擇(1 → 5 個特徵)</p>
+</div></header>
+
+<main>
+  <section class="card">
+    <div class="controls">
+      <div>
+        <label for="problem">① 選擇題目(下拉選單)</label>
+        <select id="problem">
+          <option value="p1">Problem 1:CRISP-DM Multiple Linear Regression</option>
+          <option value="p2">Problem 2:Forward Selection 特徵選擇</option>
+        </select>
+      </div>
+      <div>
+        <label for="url">② Dataset URL(可任意輸入 CSV 網址)</label>
+        <input type="text" id="url" spellcheck="false" value="https://raw.githubusercontent.com/Avik-Jain/100-Days-Of-ML-Code/master/datasets/50_Startups.csv">
+      </div>
+    </div>
+    <div class="row">
+      <button class="primary" id="run">執行分析</button>
+      <span class="hint">或上傳本機 CSV:</span>
+      <input type="file" id="file" accept=".csv,text/csv">
+    </div>
+    <div class="row">
+      <span class="hint">常用資料集:</span>
+      <button class="chip" data-url="https://raw.githubusercontent.com/Avik-Jain/100-Days-Of-ML-Code/master/datasets/50_Startups.csv">Avik-Jain</button>
+      <button class="chip" data-url="https://raw.githubusercontent.com/harimittapalli/Mulitple-Linear-Reggression/master/50_Startups.csv">harimittapalli</button>
+      <button class="chip" data-url="https://gist.githubusercontent.com/GaneshSparkz/b5662effbdae8746f7f7d8ed70c42b2d/raw/faf8b1a0d58e251f48a647d3881e7a960c3f0925/50_Startups.csv">GaneshSparkz Gist</button>
+    </div>
+    <p class="hint" style="margin:10px 0 0">規則:目標欄位為 <code>Profit</code>(找不到則取最後一欄);文字欄位自動 One-Hot(drop first);80/20 切分,<code>random_state=0</code>(與 scikit-learn 的切分結果一致)。網址需允許跨網域讀取(CORS),例如 raw.githubusercontent.com;貼上 github.com 的 blob 連結會自動轉成 raw 連結。</p>
+  </section>
+
+  <div id="status"></div>
+  <div id="error"></div>
+
+  <!-- ===== Problem 1 ===== -->
+  <div id="v-p1" class="view on">
+    <section class="card">
+      <h2>CRISP-DM 六個階段</h2>
+      <ul class="steps" id="p1-steps"><li>尚未執行。</li></ul>
+    </section>
+    <div class="kpis" id="p1-kpis"></div>
+    <section class="card">
+      <h2>迴歸方程式與係數</h2>
+      <div class="eq" id="p1-eq">—</div>
+      <div class="scroll" style="margin-top:12px"><table id="p1-coef"></table></div>
+    </section>
+    <section class="card">
+      <h2>Actual vs. Predicted(測試集)</h2>
+      <div class="cbox" style="height:400px"><canvas id="c-scatter"></canvas></div>
+    </section>
+    <section class="card">
+      <h2>資料預覽(前 5 列)</h2>
+      <div class="scroll"><table id="p1-head"></table></div>
+    </section>
+  </div>
+
+  <!-- ===== Problem 2 ===== -->
+  <div id="v-p2" class="view">
+    <section class="card">
+      <h2>Forward Selection 結果</h2>
+      <div class="scroll"><table id="p2-table"></table></div>
+      <p class="hint" style="margin:10px 0 0">Markdown 表格(可直接複製):</p>
+      <pre id="p2-md"></pre>
+      <div class="note">每一步以「測試集 RMSE 最小」挑選特徵(與作業提供的 workflow 相同),因此 RMSE 會略為樂觀;嚴謹做法是改用訓練集上的交叉驗證挑選。</div>
+    </section>
+    <section class="card">
+      <h2>RMSE / R-squared by Number of Features</h2>
+      <div class="charts">
+        <div class="cbox"><canvas id="c-rmse"></canvas></div>
+        <div class="cbox"><canvas id="c-r2"></canvas></div>
+      </div>
+    </section>
+  </div>
+</main>
+<footer>所有數值皆由瀏覽器即時從你輸入的資料計算,沒有寫死的結果。</footer>
+
+<script>
+// ==== CORE START ====
+function parseCSV(text){
+  if(text.charCodeAt(0)===0xFEFF) text=text.slice(1);
+  if(/^\s*</.test(text)) throw new Error('該網址回傳的是網頁(HTML)而不是 CSV,請確認是 raw CSV 連結。');
+  const rows=[]; let row=[], cur='', inQ=false;
+  for(let i=0;i<text.length;i++){
+    const c=text[i];
+    if(inQ){
+      if(c==='"'){ if(text[i+1]==='"'){cur+='"';i++;} else inQ=false; }
+      else cur+=c;
+    } else if(c==='"') inQ=true;
+    else if(c===','){ row.push(cur); cur=''; }
+    else if(c==='\n'||c==='\r'){ if(c==='\r'&&text[i+1]==='\n') i++; row.push(cur); cur=''; rows.push(row); row=[]; }
+    else cur+=c;
+  }
+  if(cur!==''||row.length){ row.push(cur); rows.push(row); }
+  const clean=rows.filter(r=>r.some(v=>v.trim()!==''));
+  if(clean.length<2) throw new Error('CSV 內容不足:至少需要標題列與一列資料。');
+  const headers=clean[0].map(h=>h.trim());
+  if(headers.length<2) throw new Error('CSV 至少需要兩個欄位(特徵與目標)。');
+  return {headers, rows:clean.slice(1).map(r=>headers.map((_,j)=>(r[j]===undefined?'':r[j]).trim()))};
+}
+
+function prepare(table){
+  const {headers, rows}=table;
+  const isNum=j=>rows.some(r=>r[j]!=='') && rows.every(r=>r[j]===''||Number.isFinite(Number(r[j])));
+  let ti=headers.indexOf('Profit'); if(ti<0) ti=headers.length-1;
+  if(!isNum(ti)) throw new Error('目標欄位「'+headers[ti]+'」不是數值欄位。');
+  const featIdx=headers.map((_,j)=>j).filter(j=>j!==ti);
+  const keep=rows.filter(r=>r[ti]!==''&&featIdx.every(j=>r[j]!==''));
+  if(keep.length<10) throw new Error('有效資料列少於 10 筆,無法建模。');
+  const numCols=featIdx.filter(isNum), catCols=featIdx.filter(j=>!isNum(j));
+  const names=[], cols=[];
+  numCols.forEach(j=>{names.push(headers[j]); cols.push(keep.map(r=>Number(r[j])));});
+  catCols.forEach(j=>{
+    const cats=[...new Set(keep.map(r=>r[j]))].sort();
+    cats.slice(1).forEach(c=>{names.push(headers[j]+'_'+c); cols.push(keep.map(r=>r[j]===c?1:0));});
+  });
+  if(!names.length) throw new Error('沒有可用的特徵欄位。');
+  return {target:headers[ti], y:keep.map(r=>Number(r[ti])), names, cols,
+          numCols:numCols.map(j=>headers[j]), catCols:catCols.map(j=>headers[j]),
+          n:keep.length, dropped:rows.length-keep.length};
+}
+
+// numpy RandomState(seed).permutation(n) replica (MT19937 + legacy shuffle) => same split as sklearn
+function mt19937(seed){
+  const mt=new Uint32Array(624); let idx=624;
+  mt[0]=seed>>>0;
+  for(let i=1;i<624;i++){ const s=(mt[i-1]^(mt[i-1]>>>30))>>>0; mt[i]=(Math.imul(1812433253,s)+i)>>>0; }
+  function gen(){
+    for(let k=0;k<624;k++){
+      const y=((mt[k]&0x80000000)|(mt[(k+1)%624]&0x7fffffff))>>>0;
+      let v=mt[(k+397)%624]^(y>>>1); if(y&1) v^=0x9908b0df;
+      mt[k]=v>>>0;
+    }
+    idx=0;
+  }
+  return {next(){
+    if(idx>=624) gen();
+    let y=mt[idx++];
+    y=(y^(y>>>11))>>>0; y=(y^((y<<7)&0x9d2c5680))>>>0; y=(y^((y<<15)&0xefc60000))>>>0; y=(y^(y>>>18))>>>0;
+    return y;
+  }};
+}
+function randInterval(rng,max){
+  if(max===0) return 0;
+  let mask=max; mask|=mask>>>1; mask|=mask>>>2; mask|=mask>>>4; mask|=mask>>>8; mask|=mask>>>16;
+  let v; while((v=(rng.next()&mask)>>>0)>max);
+  return v;
+}
+function splitIdx(n,testSize,seed){
+  const nTest=Math.ceil(testSize*n), nTrain=n-nTest;
+  const rng=mt19937(seed); const perm=Array.from({length:n},(_,i)=>i);
+  for(let i=n-1;i>=1;i--){ const j=randInterval(rng,i); const t=perm[i]; perm[i]=perm[j]; perm[j]=t; }
+  return {test:perm.slice(0,nTest), train:perm.slice(nTest,nTest+nTrain)};
+}
+
+function solve(A,b){
+  const p=b.length;
+  for(let attempt=0;attempt<2;attempt++){
+    const M=A.map((r,i)=>[...r,b[i]]);
+    if(attempt===1) for(let i=0;i<p;i++) M[i][i]+=1e-8*(M[i][i]||1);
+    let ok=true;
+    for(let col=0;col<p;col++){
+      let piv=col; for(let r=col+1;r<p;r++) if(Math.abs(M[r][col])>Math.abs(M[piv][col])) piv=r;
+      if(Math.abs(M[piv][col])<1e-10){ok=false;break;}
+      const tmp=M[col]; M[col]=M[piv]; M[piv]=tmp;
+      for(let r=col+1;r<p;r++){ const f=M[r][col]/M[col][col]; for(let c=col;c<=p;c++) M[r][c]-=f*M[col][c]; }
+    }
+    if(!ok) continue;
+    const x=new Array(p).fill(0);
+    for(let i=p-1;i>=0;i--){ let s=M[i][p]; for(let j=i+1;j<p;j++) s-=M[i][j]*x[j]; x[i]=s/M[i][i]; }
+    return x;
+  }
+  throw new Error('特徵之間完全共線,無法求解。');
+}
+function fitOLS(Xcols,y){
+  const n=y.length,p=Xcols.length;
+  const my=y.reduce((a,b)=>a+b,0)/n;
+  const mean=Xcols.map(c=>c.reduce((a,b)=>a+b,0)/n);
+  const sd=Xcols.map((c,j)=>{const s=Math.sqrt(c.reduce((a,v)=>a+(v-mean[j])*(v-mean[j]),0)/n); return s>1e-12?s:1;});
+  const Z=Xcols.map((c,j)=>c.map(v=>(v-mean[j])/sd[j]));
+  const A=Array.from({length:p},()=>new Array(p).fill(0)), b=new Array(p).fill(0);
+  for(let a=0;a<p;a++){
+    for(let c2=a;c2<p;c2++){ let s=0; for(let i=0;i<n;i++) s+=Z[a][i]*Z[c2][i]; A[a][c2]=s; A[c2][a]=s; }
+    let s=0; for(let i=0;i<n;i++) s+=Z[a][i]*(y[i]-my); b[a]=s;
+  }
+  const g=solve(A,b);
+  const coef=g.map((v,j)=>v/sd[j]);
+  const intercept=my-coef.reduce((a,v,j)=>a+v*mean[j],0);
+  return {coef,intercept};
+}
+function predict(model,Xcols){
+  const n=Xcols.length?Xcols[0].length:0, out=new Array(n);
+  for(let i=0;i<n;i++){ let s=model.intercept; for(let j=0;j<Xcols.length;j++) s+=model.coef[j]*Xcols[j][i]; out[i]=s; }
+  return out;
+}
+function metrics(y,yh){
+  const n=y.length, m=y.reduce((a,b)=>a+b,0)/n; let sr=0,st=0,ab=0;
+  for(let i=0;i<n;i++){ const e=y[i]-yh[i]; sr+=e*e; st+=(y[i]-m)*(y[i]-m); ab+=Math.abs(e); }
+  const mse=sr/n; return {r2:1-sr/st, mae:ab/n, mse, rmse:Math.sqrt(mse)};
+}
+function sliceCols(cols,idx){ return cols.map(c=>idx.map(i=>c[i])); }
+function pick(arr,idx){ return idx.map(i=>arr[i]); }
+
+function runPart1(prep){
+  const sp=splitIdx(prep.n,0.2,0);
+  const Xtr=sliceCols(prep.cols,sp.train), Xte=sliceCols(prep.cols,sp.test);
+  const ytr=pick(prep.y,sp.train), yte=pick(prep.y,sp.test);
+  const model=fitOLS(Xtr,ytr);
+  const yh=predict(model,Xte);
+  return {nTrain:sp.train.length, nTest:sp.test.length, model, metrics:metrics(yte,yh),
+          points:yte.map((a,i)=>({x:a,y:yh[i]})),
+          coefs:prep.names.map((nm,j)=>({name:nm,coef:model.coef[j]}))};
+}
+
+function runPart2(prep,maxK){
+  const sp=splitIdx(prep.n,0.2,0);
+  const Xtr=sliceCols(prep.cols,sp.train), Xte=sliceCols(prep.cols,sp.test);
+  const ytr=pick(prep.y,sp.train), yte=pick(prep.y,sp.test);
+  const order=prep.names.map((nm,j)=>j).sort((a,b)=>prep.names[a]<prep.names[b]?-1:prep.names[a]>prep.names[b]?1:0); // same order as pandas Index.difference (sorted)
+  const K=Math.min(maxK,prep.names.length), selected=[], rows=[];
+  for(let k=1;k<=K;k++){
+    let bestR=Infinity,bestJ=-1,bestM=null;
+    for(const j of order){
+      if(selected.includes(j)) continue;
+      const use=selected.concat([j]);
+      const m=fitOLS(use.map(c=>Xtr[c]),ytr);
+      const mt=metrics(yte,predict(m,use.map(c=>Xte[c])));
+      if(mt.rmse<bestR){bestR=mt.rmse;bestJ=j;bestM=mt;}
+    }
+    selected.push(bestJ);
+    rows.push({k, features:selected.map(j=>prep.names[j]), rmse:bestM.rmse, r2:bestM.r2});
+  }
+  let bestK=0; rows.forEach((r,i)=>{if(r.rmse<rows[bestK].rmse) bestK=i;});
+  return {rows, bestK:rows[bestK].k};
+}
+// ==== CORE END ====
+
+// ---------- UI ----------
+const $=id=>document.getElementById(id);
+const state={table:null,prep:null,p1:null,p2:null,source:''};
+const charts={};
+const esc=s=>String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+const f=(x,d)=>Number(x).toLocaleString('en-US',{minimumFractionDigits:d,maximumFractionDigits:d});
+
+function normalizeUrl(u){
+  u=u.trim();
+  let m=u.match(/^https?:\/\/github\.com\/([^/]+)\/([^/]+)\/(?:blob|raw)\/(.+)$/);
+  if(m) return 'https://raw.githubusercontent.com/'+m[1]+'/'+m[2]+'/'+m[3];
+  return u;
+}
+function showError(msg){ const e=$('error'); e.textContent=msg; e.style.display=msg?'block':'none'; }
+function setStatus(msg){ $('status').textContent=msg; }
+function showView(){
+  const v=$('problem').value;
+  $('v-p1').classList.toggle('on',v==='p1');
+  $('v-p2').classList.toggle('on',v==='p2');
+  setTimeout(()=>{Object.values(charts).forEach(c=>c&&c.resize());},0);
+}
+
+async function fetchText(url){
+  let res;
+  try{ res=await fetch(url,{mode:'cors'}); }
+  catch(e){ throw new Error('無法從該網址讀取資料(可能是網路問題或對方不允許跨網域 CORS)。\n請改用 raw.githubusercontent.com 的連結,或用上方「上傳本機 CSV」。'); }
+  if(!res.ok) throw new Error('下載失敗:HTTP '+res.status+'。請確認網址正確。');
+  return res.text();
+}
+
+function analyze(text,sourceLabel){
+  const table=parseCSV(text);
+  const prep=prepare(table);
+  state.table=table; state.prep=prep; state.source=sourceLabel;
+  state.p1=runPart1(prep);
+  state.p2=runPart2(prep,10);
+  renderP1(); renderP2();
+  setStatus('已載入:'+sourceLabel+'(共 '+prep.n+' 筆有效資料,'+prep.names.length+' 個特徵,目標 = '+prep.target+')');
+}
+
+async function run(){
+  showError(''); const btn=$('run'); btn.disabled=true; setStatus('下載並分析中…');
+  try{
+    const url=normalizeUrl($('url').value);
+    if(!/^https?:\/\//i.test(url)) throw new Error('請輸入以 http:// 或 https:// 開頭的 CSV 網址。');
+    analyze(await fetchText(url),url);
+  }catch(e){ setStatus(''); showError(e.message); }
+  finally{ btn.disabled=false; }
+}
+
+function renderP1(){
+  const {prep,p1,table}=state, m=p1.metrics;
+  $('p1-steps').innerHTML=[
+    ['1. Business Understanding','以特徵預測目標欄位「'+prep.target+'」。'],
+    ['2. Data Understanding','共 '+(table.rows.length)+' 列、'+table.headers.length+' 欄;數值欄:'+(prep.numCols.join('、')||'無')+';類別欄:'+(prep.catCols.join('、')||'無')+(prep.dropped?';已剔除 '+prep.dropped+' 列缺值':'')+'。'],
+    ['3. Data Preparation','類別欄 One-Hot(drop first,避免虛擬變數陷阱)→ '+prep.names.length+' 個特徵;80/20 切分 → 訓練 '+p1.nTrain+'、測試 '+p1.nTest+'(random_state=0)。'],
+    ['4. Modeling','LinearRegression(OLS),以訓練集擬合。'],
+    ['5. Evaluation','測試集 R² = '+f(m.r2,4)+',RMSE = '+f(m.rmse,2)+'。'],
+    ['6. Deployment','散佈圖與迴歸方程式如下,可換資料集重新計算。']
+  ].map(s=>'<li><b>'+esc(s[0])+'</b>'+esc(s[1])+'</li>').join('');
+  $('p1-kpis').innerHTML=[['R-squared',f(m.r2,6)],['MAE',f(m.mae,2)],['MSE',m.mse.toExponential(4)],['RMSE',f(m.rmse,2)]]
+    .map(k=>'<div class="kpi"><small>'+k[0]+'</small><b>'+k[1]+'</b></div>').join('');
+  let eq=esc(prep.target)+' = '+f(p1.model.intercept,4);
+  p1.coefs.forEach(c=>{eq+=' '+(c.coef<0?'−':'+')+' '+f(Math.abs(c.coef),4)+' × ('+esc(c.name)+')';});
+  $('p1-eq').innerHTML='<code>'+eq+'</code>';
+  $('p1-coef').innerHTML='<thead><tr><th>項目</th><th class="num">係數</th></tr></thead><tbody><tr><td>Intercept</td><td class="num">'+f(p1.model.intercept,4)+'</td></tr>'+
+    p1.coefs.map(c=>'<tr><td>'+esc(c.name)+'</td><td class="num">'+f(c.coef,4)+'</td></tr>').join('')+'</tbody>';
+  $('p1-head').innerHTML='<thead><tr>'+table.headers.map(h=>'<th>'+esc(h)+'</th>').join('')+'</tr></thead><tbody>'+
+    table.rows.slice(0,5).map(r=>'<tr>'+r.map(v=>'<td>'+esc(v)+'</td>').join('')+'</tr>').join('')+'</tbody>';
+  drawScatter();
+}
+
+function renderP2(){
+  const {p2}=state, strs=p2.rows.map(r=>'['+r.features.join(', ')+']');
+  $('p2-table').innerHTML='<thead><tr><th>Number of Features</th><th>Selected Features</th><th class="num">RMSE</th><th class="num">R-squared</th></tr></thead><tbody>'+
+    p2.rows.map((r,i)=>'<tr'+(r.k===p2.bestK?' class="best"':'')+'><td>'+r.k+'</td><td>'+esc(strs[i])+(r.k===p2.bestK?'  ★ RMSE 最低':'')+'</td><td class="num">'+f(r.rmse,6)+'</td><td class="num">'+f(r.r2,6)+'</td></tr>').join('')+'</tbody>';
+  let md='| Number of Features | Selected Features | RMSE | R-squared |\n|---:|:---|---:|---:|\n';
+  p2.rows.forEach((r,i)=>{md+='| '+r.k+' | '+strs[i]+' | '+r.rmse.toFixed(6)+' | '+r.r2.toFixed(6)+' |\n';});
+  $('p2-md').textContent=md;
+  drawLines();
+}
+
+function mk(id,cfg){
+  if(typeof Chart==='undefined'){ $(id).parentNode.innerHTML='<p class="hint">圖表函式庫(Chart.js)載入失敗,請檢查網路後重新整理。</p>'; return; }
+  if(charts[id]) charts[id].destroy();
+  charts[id]=new Chart($(id).getContext('2d'),cfg);
+}
+function drawScatter(){
+  const pts=state.p1.points, all=pts.flatMap(p=>[p.x,p.y]);
+  const lo=Math.min(...all), hi=Math.max(...all), pad=(hi-lo)*0.05;
+  mk('c-scatter',{type:'scatter',data:{datasets:[
+    {label:'Test set',data:pts,backgroundColor:'#4338ca',pointRadius:6},
+    {label:'Perfect fit (y = x)',data:[{x:lo-pad,y:lo-pad},{x:hi+pad,y:hi+pad}],showLine:true,borderColor:'#dc2626',borderDash:[6,5],pointRadius:0,borderWidth:2}
+  ]},options:{responsive:true,maintainAspectRatio:false,plugins:{title:{display:true,text:'Actual vs. Predicted '+state.prep.target}},
+    scales:{x:{title:{display:true,text:'Actual '+state.prep.target}},y:{title:{display:true,text:'Predicted '+state.prep.target}}}}});
+}
+function drawLines(){
+  const rows=state.p2.rows, ks=rows.map(r=>r.k);
+  const one=(id,label,key)=>mk(id,{type:'line',data:{labels:ks,datasets:[{label,data:rows.map(r=>r[key]),borderColor:'#1f77b4',backgroundColor:'#1f77b4',pointRadius:5,tension:0}]},
+    options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false},title:{display:true,text:label+' by Number of Features'}},
+      scales:{x:{title:{display:true,text:'Number of Features'}},y:{title:{display:true,text:label}}}}});
+  one('c-rmse','RMSE','rmse'); one('c-r2','R-squared','r2');
+}
+
+$('problem').addEventListener('change',showView);
+$('run').addEventListener('click',run);
+$('url').addEventListener('keydown',e=>{if(e.key==='Enter') run();});
+document.querySelectorAll('button.chip').forEach(b=>b.addEventListener('click',()=>{$('url').value=b.dataset.url; run();}));
+$('file').addEventListener('change',async e=>{
+  const file=e.target.files[0]; if(!file) return;
+  showError('');
+  try{ analyze(await file.text(),'本機檔案 '+file.name); }
+  catch(err){ setStatus(''); showError(err.message); }
+});
+window.addEventListener('DOMContentLoaded',()=>{showView(); run();});
+</script>
+</body>
+</html>
