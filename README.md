@@ -1,6 +1,6 @@
 # AIoT-DIC2-MultipleLR: 50 Startups Regression & Feature Selection Explorer
 
-本專案依據作業要求與 [huanchen1107/AIoT-DIC2-MultipleLR](https://github.com/huanchen1107/AIoT-DIC2-MultipleLR) 範例架構進行完整實作，包含：
+本專案依據作業要求進行完整實作，包含：
 - **Part 1: CRISP-DM 標準流程** 求解 50 Startups 多元線性回歸問題
 - **Part 2: 特徵選擇 (Forward Stepwise Selection) 與機器學習多模型比較 Workflow**
 - **🎯 加總分 1 分要求**：提供**下拉式選單 (Dropdown)**，即時切換呈現兩種 Problem
